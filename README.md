@@ -1,2 +1,2 @@
-# MIPS-Assembler-
-This is an implementation of MIPS Assembler
+# MIPS Assembler 
+This is an implementation of MIPS Assembler.
