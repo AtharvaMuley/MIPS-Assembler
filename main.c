@@ -37,6 +37,13 @@ void parseLabels(){
     {  
         token = strtok(fileLine, " \t\v\r\n\f,()");
         int label_Flag = 0;
+        while (token != NULL)
+        {
+            printf("%s\n", token);
+
+            token = strtok(NULL, " \t\v\r\n\f,();");
+        }
+        
         printf("Token:%s\n", token);
         // char  *c = token;
         // while (c != '\0')
@@ -48,8 +55,7 @@ void parseLabels(){
         // }
         // if (label_Flag)
         //     printf("T:%s , ", token);
-        if (*token == ':')
-            printf("haha");
+        printf("\n");
     }
 }
 
