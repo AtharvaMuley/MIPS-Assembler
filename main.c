@@ -36,25 +36,22 @@ void parseLabels(){
     while (fgets(fileLine, sizeof fileLine, file_ptr) != NULL)
     {  
         token = strtok(fileLine, " \t\v\r\n\f,()");
+        if (token != NULL)
+            printf("%s\n", token);
         int label_Flag = 0;
         while (token != NULL)
         {
-            printf("%s\n", token);
-
-            token = strtok(NULL, " \t\v\r\n\f,();");
+            token = strtok(NULL, " \t\v\r\n\f,()");
+            if (strcmp(token, ";")==0){
+                while (token != NULL)
+                {
+                    token = strtok(NULL, " \t\v\r\n\f,()");
+                }
+                
+            }
+            if(token != NULL)
+                printf("%s\n", token);
         }
-        
-        printf("Token:%s\n", token);
-        // char  *c = token;
-        // while (c != '\0')
-        // {
-        //     if(c  == ':'){
-        //         label_Flag = 1;
-        //         break;
-        //     }
-        // }
-        // if (label_Flag)
-        //     printf("T:%s , ", token);
         printf("\n");
     }
 }
