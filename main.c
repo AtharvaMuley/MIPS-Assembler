@@ -16,28 +16,34 @@ struct Labels{
     int address;
 };
 
-int findInstruction(char *token){
+char* findInstruction(char *token){
     // Lower the token character
     char *c = token;
     for(; *c; ++c) *c = (char)tolower(*c);
     // Search the instruction HashMap
     for(int i = 0; i < 2; i++){
         if (strcmp(token, instructions[i].instructionName) == 0){
-            return 1;
+            return instructions[i].address;
         }
     }
-    return 0;
+    return "a";
 }
 void parseLabels(){
     FILE *file_ptr = fopen("code.S", "r");
+    FILE *file_ptr_output = fopen("output.txt","w");
     char fileLine[256];
     char *token;
+    
 
     while (fgets(fileLine, sizeof fileLine, file_ptr) != NULL)
     {  
         token = strtok(fileLine, " \t\v\r\n\f,()");
-        if (token != NULL)
+        if (token != NULL){
             printf("%s\n", token);
+	    fputs(findInstruction(token),file_ptr_output);
+	    
+	    
+        }
         int label_Flag = 0;
         while (token != NULL)
         {
@@ -49,46 +55,60 @@ void parseLabels(){
                 }
                 
             }
-            if(token != NULL)
+            if(token != NULL){
                 printf("%s\n", token);
+		fputs(token,file_ptr_output);
+		
+	    }
         }
         printf("\n");
     }
+    fclose(file_ptr_output);
 }
 
 void parseInstructions()
 {
-    FILE *file_ptr = fopen("code.S", "r");
-    // char *fileLine = (char)malloc(256* sizeof(char));
-    char fileLine[256];
-    char *token;
-    while (fgets(fileLine, sizeof fileLine, file_ptr) != NULL)
-    {
-        token = strtok(fileLine, " \t\v\r\n\f,():");
-        if (!token){
-            continue;
-        }
-        printf("\nMain Token>%s\n", token);
-        if(findInstruction(token))
-            printf("Token Found\n");
-        while (token != NULL)
-        {   
-            token = strtok(NULL, "\t\v\r\n\f,()");
-        }
+    	FILE *file_ptr = fopen("code.S", "r");
+	
+    	// char *fileLine = (char)malloc(256* sizeof(char));
+    	char fileLine[256];
+    	char *token;
+    	while (fgets(fileLine, sizeof fileLine, file_ptr) != NULL)
+    	{
+        	token = strtok(fileLine, " \t\v\r\n\f,():");
+		
+        	if (!token){
+            	continue;
+        	}
+        	printf("\nMain Token>%s\n", token);
+        	if(findInstruction(token))
+			
+           		printf("Token Found\n");
+        	while (token != NULL)
+        	{   
+            		token = strtok(NULL, "\t\v\r\n\f,()");
+			
+        	}	
         
-        printf("\n\n");
-    }
-    if (feof(file_ptr)){
-        printf("\n----- End of File -----\n");
-    }
-    fclose(file_ptr);
+        	printf("\n\n");
+    	}
+    	if (feof(file_ptr)){
+        	printf("\n----- End of File -----\n");
+    	}
+    	fclose(file_ptr);
 }
+
+	
+	
+
 int main(int argc, char const *argv[])
 {
-    // Find Labels in the assembely if any.
-    parseLabels();
-    // Parse the Instructions
-    // parseInstructions();
+    	// Find Labels in the assembely if any.
+
+    	parseLabels();
+	
+    	// Parse the Instructions
+    	// parseInstructions();
     
-    return 0;
+    	return 0;
 }
