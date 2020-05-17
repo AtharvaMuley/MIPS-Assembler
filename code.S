@@ -1,11 +1,7 @@
-MOV ax, ad ; This is a test comment
+addi  $1, $0, #12
+add   $2, $0, $0 ; This is a test comment
 MOV ad, er ; test
 MOV ad, er ; RF
-
-:start
-    MOV AX, AB ;
-    MOV sd, er ;
-
 :loop
-    mov df, sf ;
-    mav df, sd ;
+    MOV AX, AB ;
+    J loop
