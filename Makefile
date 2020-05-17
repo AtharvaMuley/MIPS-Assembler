@@ -7,4 +7,4 @@ $(bin_programs): $(OBJS)
 %.o: %.c
 	$(CC) -c -o $@ $<
 clean:
-	rm -f  $(bin_programs) $(OBJS)
+	rm -f  $(bin_programs) $(OBJS) *.txt

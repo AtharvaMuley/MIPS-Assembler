@@ -93,11 +93,11 @@ char findInstructionType(char *token)
             return instructions[i].type;
         }
     }
-    return "NOP";
+    return 'n';
 }
 
 // Find the instruction and return its address
-char *findInstruction(char *token)
+int findInstruction(char *token)
 {
     // Lower the token character
     char *c = token;
@@ -111,18 +111,18 @@ char *findInstruction(char *token)
             return instructions[i].address;
         }
     }
-    return "";
+    return -1;
 }
 
 // Parse the instructions and convert it to corresponding hex address
-void parseInstructions(char *sourceFile, char *outputFile)
+void parseInstructions( const char *sourceFile, const char *outputFile)
 {
-    FILE *file_ptr = fopen("code.S", "r");
-    FILE *file_ptr_output = fopen("output.txt", "w");
+    FILE *file_ptr = fopen(sourceFile, "r");
+    FILE *file_ptr_output = fopen(outputFile, "w");
     char fileLine[256];
     char *token, type, fileWrite[32];
     int new_address;
-    uint32_t instr_address;
+    u_int32_t instr_address;
 
     while (fgets(fileLine, sizeof fileLine, file_ptr) != NULL)
     {
@@ -136,25 +136,21 @@ void parseInstructions(char *sourceFile, char *outputFile)
         {
             printf("Token parsed: %s\n", token);
 
-            // If the token is a label find its address
+            // If the token is a label , continue to search for next token
             if (token[0] == ':')
             {
-                // printf("Label %s address: %d\n", token, findLabelAddress(token));
                 continue;
             }
 
             //Check if it is instruction
-            // printf("Ttype: %s  ", token);
             type = findInstructionType(token);
-            // printf("t: %c\n", type);
-            uint8_t opcode = findInstruction(token);
+            u_int8_t opcode = findInstruction(token);
             opcode = opcode;
             if (type == 'R')
             {
                 char *dest = strtok(NULL, " ,$");
                 char *source1 = strtok(NULL, " ,$");
                 char *source2 = strtok(NULL, " ,$");
-                // printf("opcode: %d OP1: %s OP2: %s Dest: %s", opcode, source1, source2, dest);
                 instr_address |= ((opcode & 0x3f) << 26);
                 instr_address |= ((atoi(source1) & 0x1f) << 21);
                 instr_address |= ((atoi(source2) & 0x1f) << 16);
@@ -168,12 +164,10 @@ void parseInstructions(char *sourceFile, char *outputFile)
                 char *source1 = strtok(NULL, " ,$");
                 char *immediate = strtok(NULL, " ,");
                 immediate = strtok(immediate, "#()");
-                // printf("opcode: %d OP1: %s imm: %s Dest: %s", opcode, source1, immediate, dest);
                 instr_address |= ((opcode & 0x3f) << 26);
                 instr_address |= ((atoi(source1) & 0x1f) << 21);
                 instr_address |= ((atoi(dest) & 0x1f) << 16);
                 instr_address |= (atoi(immediate) & 0xffff);
-                // 100000 00000 00001 000000000001100
             }
             else
             {
@@ -195,17 +189,15 @@ void parseInstructions(char *sourceFile, char *outputFile)
                 instr_address |= ((opcode & 0xff) << 28);
                 instr_address |= new_address & 0x3FFFFFF;
             }
-            // printf("\n%0x", instr_address);
             sprintf(fileWrite, "0x%0x\n", instr_address);
             fputs(fileWrite, file_ptr_output);
         }
-        // printf("\n\n");
     }
     fclose(file_ptr_output);
 }
 
 // Parse Labels and add them to a structure
-void parseLabels(char *sourceFile, char *outputFile)
+void parseLabels(const char *sourceFile, const char *outputFile)
 {
     FILE *file_ptr = fopen("code.S", "r");
 
@@ -238,11 +230,11 @@ int main(int argc, char const *argv[])
     // Find Labels in the assembely if any.
     printf("Parsing Labels...\n");
     parseLabels( argv[1] , argv[2]);
-    // for (int i = 0; i < 3; i++)
-    //     printf("Label %s -> address: %d\n", labels[i].labelName, labels[i].address);
+
     // Parse the Instructions
     printf("Building instructions...\n");
     parseInstructions(argv[1] , argv[2]);
     printf("Finished parsing %s generated.\n", argv[2]);
+
     return 0;
 }
