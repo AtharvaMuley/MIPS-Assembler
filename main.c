@@ -8,10 +8,13 @@ struct Instructions
     char *instructionName;
     int  address;
     char type;
+    int sh;
+    int func;
 } instructions[] = {
-    {"mov", 00001, 'R'},
-    {"addi", 10000, 'R'},
-    {"j",000010, 'J'}
+    {"mov", 00001, 'R',0,0},
+    {"add",00000, 'R',  00000, 100000},
+    {"addi", 10000, 'R', 0 ,0},
+    {"j",000010, 'J', 0, 0}
     };
 
 struct Labels
@@ -37,6 +40,38 @@ int findLabelAddress(char *token)
     return -1;
 }
 
+int findShamt(char* token){
+    // Lower the token character
+    char *c = token;
+    for (; *c; ++c)
+        *c = (char)tolower(*c);
+    // Search the instruction HashMap
+    for (int i = 0; i < 2; i++)
+    {
+        if (strcmp(token, instructions[i].instructionName) == 0)
+        {
+            return instructions[i].sh;
+        }
+    }
+    return -1;
+}
+
+int findFunc(char *token){
+     // Lower the token character
+    char *c = token;
+    for (; *c; ++c)
+        *c = (char)tolower(*c);
+    // Search the instruction HashMap
+    for (int i = 0; i < 2; i++)
+    {
+        if (strcmp(token, instructions[i].instructionName) == 0)
+        {
+            return instructions[i].func;
+        }
+    }
+    return -1;
+}
+
 char findInstructionType(char *token){
     // Lower the token character
     char *c = token;
@@ -50,7 +85,7 @@ char findInstructionType(char *token){
             return instructions[i].type;
         }
     }
-    return 'NOP';
+    return "NOP";
 }
 
 char *findInstruction(char *token)
@@ -74,13 +109,13 @@ void parseInstructions()
     FILE *file_ptr = fopen("code.S", "r");
     FILE *file_ptr_output = fopen("output.txt", "w");
     char fileLine[256];
-    char *token, type;
+    char *token, type, fileWrite[32];
     int new_address;
     uint32_t instr_address;
 
     while (fgets(fileLine, sizeof fileLine, file_ptr) != NULL)
     {   
-        instr_address = 0x0;
+        instr_address = 0x00000000;
         new_address  = 0x0;
         // Extract first token on each line
         token = strtok(fileLine, " \t\v\r\n\f,()");
@@ -101,12 +136,29 @@ void parseInstructions()
             //Check if it is instruction
             printf("Ttype: %s  ", token);
             type = findInstructionType(token);
+            uint8_t opcode = findInstruction(token);
             if (type == 'R'){
-                printf("%c", type, token);
+                char *dest = strtok(NULL, " ,$");
+                char *source1 = strtok(NULL, " ,$");
+                char *source2 = strtok(NULL, " ,$");
+                printf("opcode: %d OP1: %s OP2: %s Dest: %s", opcode, source1, source2, dest);
+                instr_address |= ((opcode & 0xff) << 28);
+                instr_address |= ((atoi(source1) & 0x1f) << 21);
+                instr_address |= ((atoi(source2) & 0x1f) << 16);
+                instr_address |= ((atoi(dest) & 0x1f) << 11);
+                instr_address |= ((findShamt(token) & 0x1f) << 21);
+                instr_address |= ((findFunc(token) & 0x3F) << 21);
             }
             else if (type == 'I')
             {
-                /* code */
+                char *dest = strtok(NULL, " ,$");
+                char *source1 = strtok(NULL, " ,$");
+                char *immediate = strtok(NULL, " ,$");
+                printf("opcode: %d OP1: %s OP2: %s Dest: %s", opcode, source1, immediate, dest);
+                instr_address |= ((opcode & 0xff) << 28);
+                instr_address |= ((atoi(source1) & 0x1f) << 21);
+                instr_address |= (atoi(immediate) & 0xffff);
+                instr_address |= ((atoi(dest) & 0x1f) << 16);
             }
             else
             {
@@ -122,13 +174,14 @@ void parseInstructions()
                 // If it is a label
                 else
                 {
-                    new_address = findLabelAddress(jump_address) * 4;
+                    new_address = findLabelAddress(jump_address) * 1;
                 }
-                uint8_t opcode = findInstruction(token);
                 instr_address |= ((opcode& 0xff) << 28);
                 instr_address |= new_address & 0x3FFFFFF;
-                printf("\n%0x", instr_address);
             }
+            printf("\n%0x", instr_address);
+            sprintf(fileWrite, "0x%0x\n", instr_address);
+            fputs(fileWrite, file_ptr_output);
             
         }
         printf("\n\n");
