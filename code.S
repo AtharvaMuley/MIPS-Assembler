@@ -1,7 +1,7 @@
-addi  $1, $0, #12
-add   $2, $0, $0 ; This is a test comment
-MOV ad, er ; test
-MOV ad, er ; RF
-:loop
-    MOV AX, AB ;
-    J loop
+        addi  $1, $0, #12    ; x = 12 = offset to end of data table
+        add   $2, $0, $0     ; y = 0
+:loop   blez  $1, :end       ; jump to end when x<=0
+        addi  $1, $1, #-4    ; x = x - 4 = update offset by one 32-bit word
+        lw    $3, :data($1)  ; z = data[x]
+        add   $2, $2, $3     ; y = y + z
+        j     :loop          ; start next loop

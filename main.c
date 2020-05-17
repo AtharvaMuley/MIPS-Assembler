@@ -6,16 +6,17 @@
 struct Instructions
 {
     char *instructionName;
-    int  address;
+    int address;
     char type;
     int sh;
     int func;
 } instructions[] = {
-    {"mov", 00001, 'R',0,0},
-    {"add",00000, 'R',  00000, 100000},
-    {"addi", 10000, 'R', 0 ,0},
-    {"j",000010, 'J', 0, 0}
-    };
+    {"and", 0x0, 'R', 0x0, 0x24},
+    {"add", 0x0, 'R', 0x0, 0x20},
+    {"lw", 0x23, 'I', 0x0, 0x0},
+    {"addi", 0x8, 'I', 0x0, 0x0},
+    {"j", 0x2, 'J', 0x0, 0x0}
+};
 
 struct Labels
 {
@@ -23,6 +24,7 @@ struct Labels
     int address;
 } labels[256];
 
+// Find the label and return its address
 int findLabelAddress(char *token)
 {
     // Lower the token character
@@ -30,7 +32,7 @@ int findLabelAddress(char *token)
     for (; *c; ++c)
         *c = (char)tolower(*c);
     // Search the instruction HashMap
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 5; i++)
     {
         if (strcmp(token, labels[i].labelName) == 0)
         {
@@ -40,13 +42,15 @@ int findLabelAddress(char *token)
     return -1;
 }
 
-int findShamt(char* token){
+// Find the instruction and return its Shamt
+int findShamt(char *token)
+{
     // Lower the token character
     char *c = token;
     for (; *c; ++c)
         *c = (char)tolower(*c);
     // Search the instruction HashMap
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 5; i++)
     {
         if (strcmp(token, instructions[i].instructionName) == 0)
         {
@@ -56,13 +60,15 @@ int findShamt(char* token){
     return -1;
 }
 
-int findFunc(char *token){
-     // Lower the token character
+// Find the instruction and return its Funtion value
+int findFunc(char *token)
+{
+    // Lower the token character
     char *c = token;
     for (; *c; ++c)
         *c = (char)tolower(*c);
     // Search the instruction HashMap
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 5; i++)
     {
         if (strcmp(token, instructions[i].instructionName) == 0)
         {
@@ -72,13 +78,15 @@ int findFunc(char *token){
     return -1;
 }
 
-char findInstructionType(char *token){
+// Find the instruction and return its type
+char findInstructionType(char *token)
+{
     // Lower the token character
     char *c = token;
     for (; *c; ++c)
         *c = (char)tolower(*c);
     // Search the instruction HashMap
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 5; i++)
     {
         if (strcmp(token, instructions[i].instructionName) == 0)
         {
@@ -88,6 +96,7 @@ char findInstructionType(char *token){
     return "NOP";
 }
 
+// Find the instruction and return its address
 char *findInstruction(char *token)
 {
     // Lower the token character
@@ -95,7 +104,7 @@ char *findInstruction(char *token)
     for (; *c; ++c)
         *c = (char)tolower(*c);
     // Search the instruction HashMap
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 5; i++)
     {
         if (strcmp(token, instructions[i].instructionName) == 0)
         {
@@ -104,7 +113,9 @@ char *findInstruction(char *token)
     }
     return "";
 }
-void parseInstructions()
+
+// Parse the instructions and convert it to corresponding hex address
+void parseInstructions(char *sourceFile, char *outputFile)
 {
     FILE *file_ptr = fopen("code.S", "r");
     FILE *file_ptr_output = fopen("output.txt", "w");
@@ -114,9 +125,9 @@ void parseInstructions()
     uint32_t instr_address;
 
     while (fgets(fileLine, sizeof fileLine, file_ptr) != NULL)
-    {   
+    {
         instr_address = 0x00000000;
-        new_address  = 0x0;
+        new_address = 0x0;
         // Extract first token on each line
         token = strtok(fileLine, " \t\v\r\n\f,()");
 
@@ -124,49 +135,54 @@ void parseInstructions()
         if (token != NULL)
         {
             printf("Token parsed: %s\n", token);
-            // fputs(findInstruction(token), file_ptr_output);
 
             // If the token is a label find its address
             if (token[0] == ':')
             {
-                printf("Label %s address: %d\n", token, findLabelAddress(token));
+                // printf("Label %s address: %d\n", token, findLabelAddress(token));
                 continue;
             }
 
             //Check if it is instruction
-            printf("Ttype: %s  ", token);
+            // printf("Ttype: %s  ", token);
             type = findInstructionType(token);
+            // printf("t: %c\n", type);
             uint8_t opcode = findInstruction(token);
-            if (type == 'R'){
+            opcode = opcode;
+            if (type == 'R')
+            {
                 char *dest = strtok(NULL, " ,$");
                 char *source1 = strtok(NULL, " ,$");
                 char *source2 = strtok(NULL, " ,$");
-                printf("opcode: %d OP1: %s OP2: %s Dest: %s", opcode, source1, source2, dest);
-                instr_address |= ((opcode & 0xff) << 28);
+                // printf("opcode: %d OP1: %s OP2: %s Dest: %s", opcode, source1, source2, dest);
+                instr_address |= ((opcode & 0x3f) << 26);
                 instr_address |= ((atoi(source1) & 0x1f) << 21);
                 instr_address |= ((atoi(source2) & 0x1f) << 16);
                 instr_address |= ((atoi(dest) & 0x1f) << 11);
-                instr_address |= ((findShamt(token) & 0x1f) << 21);
-                instr_address |= ((findFunc(token) & 0x3F) << 21);
+                instr_address |= ((findShamt(token) & 0x1f) << 6);
+                instr_address |= ((findFunc(token) & 0x3F));
             }
             else if (type == 'I')
             {
                 char *dest = strtok(NULL, " ,$");
                 char *source1 = strtok(NULL, " ,$");
-                char *immediate = strtok(NULL, " ,$");
-                printf("opcode: %d OP1: %s OP2: %s Dest: %s", opcode, source1, immediate, dest);
-                instr_address |= ((opcode & 0xff) << 28);
+                char *immediate = strtok(NULL, " ,");
+                immediate = strtok(immediate, "#()");
+                // printf("opcode: %d OP1: %s imm: %s Dest: %s", opcode, source1, immediate, dest);
+                instr_address |= ((opcode & 0x3f) << 26);
                 instr_address |= ((atoi(source1) & 0x1f) << 21);
-                instr_address |= (atoi(immediate) & 0xffff);
                 instr_address |= ((atoi(dest) & 0x1f) << 16);
+                instr_address |= (atoi(immediate) & 0xffff);
+                // 100000 00000 00001 000000000001100
             }
             else
             {
-                char *jump_address = strtok(NULL," ");
+                char *jump_address = strtok(NULL, " ");
                 jump_address = strtok(jump_address, "\n");
 
                 // If it is an immediate value
-                if(jump_address[0] == '#'){
+                if (jump_address[0] == '#')
+                {
                     jump_address = strtok(jump_address, "#");
                     new_address = atoi(jump_address);
                 }
@@ -174,22 +190,22 @@ void parseInstructions()
                 // If it is a label
                 else
                 {
-                    new_address = findLabelAddress(jump_address) * 1;
+                    new_address = findLabelAddress(jump_address) * 4;
                 }
-                instr_address |= ((opcode& 0xff) << 28);
+                instr_address |= ((opcode & 0xff) << 28);
                 instr_address |= new_address & 0x3FFFFFF;
             }
-            printf("\n%0x", instr_address);
+            // printf("\n%0x", instr_address);
             sprintf(fileWrite, "0x%0x\n", instr_address);
             fputs(fileWrite, file_ptr_output);
-            
         }
-        printf("\n\n");
+        // printf("\n\n");
     }
     fclose(file_ptr_output);
 }
 
-void parseLabels()
+// Parse Labels and add them to a structure
+void parseLabels(char *sourceFile, char *outputFile)
 {
     FILE *file_ptr = fopen("code.S", "r");
 
@@ -208,18 +224,25 @@ void parseLabels()
         }
         address++;
     }
+    printf("Labels found: %d\n", labelcounter);
     fclose(file_ptr);
 }
 
 int main(int argc, char const *argv[])
 {
+    if (argc<3){
+        printf("Error: Enter source and output file name\n");
+        exit(0);
+    }
+
     // Find Labels in the assembely if any.
-
-    parseLabels();
-    for (int i = 0; i < 3; i++)
-        printf("Label %s -> address: %d\n", labels[i].labelName, labels[i].address);
+    printf("Parsing Labels...\n");
+    parseLabels( argv[1] , argv[2]);
+    // for (int i = 0; i < 3; i++)
+    //     printf("Label %s -> address: %d\n", labels[i].labelName, labels[i].address);
     // Parse the Instructions
-    parseInstructions();
-
+    printf("Building instructions...\n");
+    parseInstructions(argv[1] , argv[2]);
+    printf("Finished parsing %s generated.\n", argv[2]);
     return 0;
 }
